@@ -9,31 +9,32 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
   <style>
     :root {
-      --bg: #0a0e1a;
-      --surface: #111827;
-      --surface2: #1a2233;
-      --surface3: #212d40;
-      --border: rgba(255,255,255,0.08);
-      --border-hover: rgba(255,255,255,0.18);
-      --text: #e8edf5;
-      --text-muted: #7c8ca0;
-      --text-dim: #4a5568;
-      --accent-blue: #3b82f6;
-      --accent-purple: #8b5cf6;
-      --accent-cyan: #06b6d4;
-      --accent-green: #10b981;
-      --accent-orange: #f59e0b;
-      --accent-red: #ef4444;
+      --bg: #070b12;
+      --surface: rgba(14, 22, 34, 0.86);
+      --surface2: rgba(23, 34, 51, 0.92);
+      --surface3: rgba(31, 45, 66, 0.95);
+      --panel: rgba(10, 16, 26, 0.72);
+      --border: rgba(148, 163, 184, 0.16);
+      --border-hover: rgba(125, 211, 252, 0.42);
+      --text: #edf6ff;
+      --text-muted: #98a9bd;
+      --text-dim: #66758a;
+      --accent-blue: #38bdf8;
+      --accent-purple: #818cf8;
+      --accent-cyan: #22d3ee;
+      --accent-green: #34d399;
+      --accent-orange: #fbbf24;
+      --accent-red: #fb7185;
       --low-color: #ef4444;
       --medium-color: #f59e0b;
       --high-color: #10b981;
-      --gradient-1: linear-gradient(135deg, #3b82f6, #8b5cf6);
-      --gradient-2: linear-gradient(135deg, #06b6d4, #3b82f6);
-      --gradient-3: linear-gradient(135deg, #8b5cf6, #ec4899);
-      --radius: 14px;
+      --gradient-1: linear-gradient(135deg, #22d3ee, #818cf8 52%, #34d399);
+      --gradient-2: linear-gradient(135deg, #22d3ee, #38bdf8);
+      --gradient-3: linear-gradient(135deg, #818cf8, #fb7185);
+      --radius: 8px;
       --radius-sm: 8px;
-      --shadow: 0 4px 24px rgba(0,0,0,0.4);
-      --shadow-lg: 0 8px 48px rgba(0,0,0,0.6);
+      --shadow: 0 18px 50px rgba(0,0,0,0.28);
+      --shadow-lg: 0 26px 90px rgba(0,0,0,0.45);
       --transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
@@ -43,7 +44,14 @@
 
     body {
       font-family: 'Inter', sans-serif;
-      background: var(--bg);
+      background:
+        linear-gradient(rgba(125, 211, 252, 0.045) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(125, 211, 252, 0.045) 1px, transparent 1px),
+        radial-gradient(circle at 16% 12%, rgba(34, 211, 238, 0.15), transparent 30%),
+        radial-gradient(circle at 92% 4%, rgba(129, 140, 248, 0.17), transparent 28%),
+        radial-gradient(circle at 86% 76%, rgba(52, 211, 153, 0.12), transparent 32%),
+        var(--bg);
+      background-size: 48px 48px, 48px 48px, auto, auto, auto, auto;
       color: var(--text);
       min-height: 100vh;
       overflow-x: hidden;
@@ -55,35 +63,64 @@
       position: fixed;
       inset: 0;
       background:
-        radial-gradient(ellipse 80% 60% at 20% -10%, rgba(59,130,246,0.12) 0%, transparent 60%),
-        radial-gradient(ellipse 60% 40% at 80% 110%, rgba(139,92,246,0.10) 0%, transparent 60%);
+        linear-gradient(180deg, rgba(7, 11, 18, 0.1), rgba(7, 11, 18, 0.78)),
+        repeating-linear-gradient(90deg, transparent 0 72px, rgba(34, 211, 238, 0.035) 73px 74px);
       pointer-events: none;
       z-index: 0;
     }
 
-    .container { max-width: 1100px; margin: 0 auto; padding: 0 24px; position: relative; z-index: 1; }
+    .container {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 0 24px;
+      position: relative;
+      z-index: 1;
+    }
 
     /* ── Header ── */
     header {
-      padding: 40px 0 32px;
-      border-bottom: 1px solid var(--border);
-      margin-bottom: 40px;
+      padding: 34px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      margin: 28px 0 20px;
+      background:
+        linear-gradient(135deg, rgba(14, 22, 34, 0.92), rgba(9, 14, 24, 0.72)),
+        linear-gradient(90deg, rgba(34, 211, 238, 0.08), rgba(129, 140, 248, 0.08));
+      box-shadow: var(--shadow-lg);
+      overflow: hidden;
+      position: relative;
+      backdrop-filter: blur(18px);
     }
 
-    .header-inner { display: flex; align-items: center; gap: 18px; }
+    header::after {
+      content: '';
+      position: absolute;
+      inset: auto -10% 0 -10%;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(34, 211, 238, 0.72), transparent);
+    }
+
+    .header-inner {
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr);
+      align-items: center;
+      gap: 18px;
+      position: relative;
+      z-index: 1;
+    }
 
     .logo {
-      width: 52px; height: 52px;
+      width: 60px; height: 60px;
       background: var(--gradient-1);
-      border-radius: 14px;
+      border-radius: 8px;
       display: flex; align-items: center; justify-content: center;
-      font-size: 24px;
-      box-shadow: 0 0 24px rgba(59,130,246,0.35);
+      font-size: 26px;
+      box-shadow: 0 0 36px rgba(34, 211, 238, 0.32);
       flex-shrink: 0;
     }
 
     .header-text h1 {
-      font-size: 1.6rem;
+      font-size: clamp(2rem, 5vw, 4.4rem);
       font-weight: 800;
       background: var(--gradient-1);
       -webkit-background-clip: text;
@@ -93,37 +130,334 @@
     }
 
     .header-text p {
-      color: var(--text-muted);
-      font-size: 0.85rem;
-      margin-top: 4px;
+      color: #b9c7d8;
+      font-size: clamp(0.95rem, 2vw, 1.1rem);
+      margin-top: 10px;
+      max-width: 760px;
+      line-height: 1.65;
     }
 
     .model-badges {
-      display: flex; gap: 8px; flex-wrap: wrap; margin-top: 16px;
+      display: flex; gap: 8px; flex-wrap: wrap; margin-top: 22px;
+      position: relative;
+      z-index: 1;
     }
 
     .badge {
       font-size: 0.7rem;
       font-weight: 600;
-      padding: 4px 10px;
-      border-radius: 20px;
+      padding: 7px 10px;
+      border-radius: 8px;
       border: 1px solid;
       font-family: 'JetBrains Mono', monospace;
+      backdrop-filter: blur(12px);
     }
 
     .badge-blue { border-color: rgba(59,130,246,0.5); color: #93c5fd; background: rgba(59,130,246,0.1); }
     .badge-purple { border-color: rgba(139,92,246,0.5); color: #c4b5fd; background: rgba(139,92,246,0.1); }
     .badge-green { border-color: rgba(16,185,129,0.5); color: #6ee7b7; background: rgba(16,185,129,0.1); }
 
+    .hero-stats {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 28px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .hero-stat {
+      background: rgba(15, 23, 42, 0.66);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 14px;
+      min-height: 86px;
+    }
+
+    .hero-stat strong {
+      display: block;
+      font-size: 1.5rem;
+      line-height: 1.1;
+      color: var(--text);
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .hero-stat span {
+      display: block;
+      color: var(--text-muted);
+      font-size: 0.78rem;
+      margin-top: 8px;
+      line-height: 1.45;
+    }
+
+    .intro-panel {
+      margin-bottom: 22px;
+      padding: 0;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background:
+        linear-gradient(135deg, rgba(6, 13, 22, 0.94), rgba(8, 18, 30, 0.82)),
+        linear-gradient(110deg, rgba(34, 211, 238, 0.12), transparent 34%, rgba(52, 211, 153, 0.08));
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(18px);
+      overflow: hidden;
+    }
+
+    .intro-layout {
+      display: grid;
+      grid-template-columns: minmax(0, 0.95fr) minmax(420px, 1.05fr);
+      min-height: 560px;
+    }
+
+    .intro-copy {
+      padding: 32px;
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 26px;
+    }
+
+    .intro-eyebrow {
+      display: inline-flex;
+      width: fit-content;
+      padding: 7px 10px;
+      border: 1px solid rgba(34, 211, 238, 0.32);
+      border-radius: 8px;
+      background: rgba(34, 211, 238, 0.08);
+      color: var(--accent-cyan);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin-bottom: 16px;
+    }
+
+    .intro-panel h2 {
+      font-size: clamp(2rem, 4vw, 3.8rem);
+      line-height: 1.02;
+      margin-bottom: 16px;
+      max-width: 760px;
+    }
+
+    .intro-lead {
+      color: #b9c7d8;
+      line-height: 1.75;
+      max-width: 660px;
+      margin-bottom: 0;
+      font-size: 1rem;
+    }
+
+    .decision-strip {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .decision-item {
+      padding: 13px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: rgba(15, 23, 42, 0.56);
+    }
+
+    .decision-item span {
+      display: block;
+      color: var(--text-muted);
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      margin-bottom: 6px;
+    }
+
+    .decision-item strong {
+      font-size: 0.9rem;
+      line-height: 1.35;
+    }
+
+    .pipeline-board {
+      padding: 26px;
+      background:
+        linear-gradient(rgba(125, 211, 252, 0.045) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(125, 211, 252, 0.045) 1px, transparent 1px),
+        rgba(2, 6, 14, 0.22);
+      background-size: 34px 34px, 34px 34px, auto;
+    }
+
+    .pipeline-title {
+      display: flex;
+      justify-content: space-between;
+      gap: 14px;
+      align-items: flex-start;
+      margin-bottom: 18px;
+    }
+
+    .pipeline-title h3 {
+      font-size: 1.08rem;
+      line-height: 1.35;
+    }
+
+    .pipeline-title span {
+      color: var(--text-muted);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.72rem;
+      white-space: nowrap;
+    }
+
+    .workflow-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 12px;
+      margin: 0;
+    }
+
+    .workflow-card {
+      display: grid;
+      grid-template-columns: 44px minmax(0, 1fr);
+      gap: 14px;
+      min-height: auto;
+      padding: 16px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: rgba(7, 12, 20, 0.68);
+      position: relative;
+      transition: var(--transition);
+    }
+
+    .workflow-card:hover {
+      border-color: var(--border-hover);
+      transform: translateX(4px);
+    }
+
+    .workflow-card::after {
+      content: '';
+      position: absolute;
+      left: 37px;
+      bottom: -13px;
+      width: 1px;
+      height: 13px;
+      background: linear-gradient(var(--accent-cyan), transparent);
+    }
+
+    .workflow-card:last-child::after {
+      display: none;
+    }
+
+    .node-icon {
+      width: 44px;
+      height: 44px;
+      display: grid;
+      place-items: center;
+      border: 1px solid var(--border-hover);
+      border-radius: 8px;
+      background: rgba(34, 211, 238, 0.1);
+      color: var(--accent-cyan);
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 800;
+    }
+
+    .workflow-card .step {
+      color: var(--accent-cyan);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+
+    .workflow-card h3 {
+      font-size: 1rem;
+      line-height: 1.35;
+      margin-bottom: 8px;
+    }
+
+    .workflow-card p {
+      color: var(--text-muted);
+      font-size: 0.86rem;
+      line-height: 1.6;
+      margin-bottom: 0;
+    }
+
+    .workflow-card .compact-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 12px;
+    }
+
+    .compact-meta span {
+      padding: 5px 8px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text-muted);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.68rem;
+      background: rgba(15, 23, 42, 0.64);
+    }
+
+    .workflow-card strong {
+      color: var(--text);
+    }
+
+    .plain-explain {
+      display: grid;
+      grid-template-columns: 1.15fr 0.85fr;
+      gap: 12px;
+      margin-top: 12px;
+    }
+
+    .plain-block {
+      padding: 18px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: rgba(15, 23, 42, 0.62);
+    }
+
+    .plain-block h3 {
+      font-size: 0.95rem;
+      margin-bottom: 8px;
+      color: var(--accent-cyan);
+    }
+
+    .plain-block p {
+      color: var(--text-muted);
+      font-size: 0.86rem;
+      line-height: 1.7;
+    }
+
+    .intro-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-top: 0;
+    }
+
+    .app-shell {
+      display: none;
+      animation: fadeIn 0.35s ease;
+    }
+
+    .app-shell.visible {
+      display: block;
+    }
+
     /* ── Tabs ── */
     .tabs {
       display: flex; gap: 4px;
-      background: var(--surface);
+      background: rgba(10, 16, 26, 0.74);
       border: 1px solid var(--border);
       border-radius: var(--radius);
       padding: 6px;
-      margin-bottom: 32px;
+      margin-bottom: 22px;
       flex-wrap: wrap;
+      position: sticky;
+      top: 12px;
+      z-index: 5;
+      backdrop-filter: blur(18px);
+      box-shadow: var(--shadow);
     }
 
     .tab {
@@ -143,6 +477,10 @@
     }
 
     .tab:hover { background: var(--surface2); color: var(--text); }
+    .tab:focus-visible, .btn:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
+      outline: 2px solid rgba(34, 211, 238, 0.85);
+      outline-offset: 2px;
+    }
 
     .tab.active {
       background: var(--gradient-1);
@@ -164,9 +502,14 @@
       padding: 24px;
       margin-bottom: 20px;
       transition: var(--transition);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(18px);
     }
 
-    .card:hover { border-color: var(--border-hover); }
+    .card:hover {
+      border-color: var(--border-hover);
+      transform: translateY(-2px);
+    }
 
     .card-title {
       font-size: 0.9rem;
@@ -204,7 +547,7 @@
     }
 
     input, select, textarea {
-      background: var(--surface2);
+      background: rgba(7, 12, 20, 0.72);
       border: 1px solid var(--border);
       border-radius: var(--radius-sm);
       color: var(--text);
@@ -214,12 +557,13 @@
       transition: var(--transition);
       outline: none;
       width: 100%;
+      min-height: 44px;
     }
 
     input:focus, select:focus, textarea:focus {
       border-color: var(--accent-blue);
       box-shadow: 0 0 0 3px rgba(59,130,246,0.15);
-      background: var(--surface3);
+      background: rgba(15, 23, 42, 0.95);
     }
 
     input::placeholder, textarea::placeholder { color: var(--text-dim); }
@@ -238,6 +582,7 @@
       cursor: pointer;
       transition: var(--transition);
       position: relative; overflow: hidden;
+      min-height: 44px;
     }
 
     .btn::after {
@@ -253,14 +598,14 @@
 
     .btn-primary {
       background: var(--gradient-1);
-      color: white;
-      box-shadow: 0 4px 16px rgba(59,130,246,0.35);
+      color: #06111f;
+      box-shadow: 0 4px 22px rgba(34,211,238,0.24);
     }
 
-    .btn-primary:hover { box-shadow: 0 6px 24px rgba(59,130,246,0.5); transform: translateY(-1px); }
+    .btn-primary:hover { box-shadow: 0 8px 32px rgba(34,211,238,0.34); transform: translateY(-1px); }
 
     .btn-secondary {
-      background: var(--surface2);
+      background: rgba(15, 23, 42, 0.72);
       color: var(--text-muted);
       border: 1px solid var(--border);
     }
@@ -288,11 +633,13 @@
 
     /* ── Result Panel ── */
     .result-panel {
-      background: var(--surface2);
+      background: rgba(10, 16, 26, 0.82);
       border: 1px solid var(--border);
       border-radius: var(--radius);
       overflow: hidden;
       display: none;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(18px);
     }
 
     .result-panel.visible { display: block; animation: fadeIn 0.4s ease; }
@@ -301,6 +648,7 @@
       padding: 16px 20px;
       border-bottom: 1px solid var(--border);
       display: flex; align-items: center; gap: 12px;
+      background: linear-gradient(90deg, rgba(34, 211, 238, 0.08), transparent);
     }
 
     .result-status {
@@ -316,11 +664,12 @@
       display: flex; align-items: center; gap: 16px;
       padding: 20px 24px;
       border-bottom: 1px solid var(--border);
+      background: rgba(15, 23, 42, 0.42);
     }
 
     .level-badge {
       padding: 8px 20px;
-      border-radius: 24px;
+      border-radius: 8px;
       font-size: 1.1rem;
       font-weight: 800;
       text-transform: uppercase;
@@ -355,6 +704,7 @@
       padding: 16px 20px;
       border-radius: var(--radius-sm);
       border: 1px solid;
+      background-image: linear-gradient(135deg, rgba(255,255,255,0.04), transparent);
     }
 
     .alignment-aligned {
@@ -380,10 +730,14 @@
     }
 
     .split-card {
-      background: var(--surface);
+      background: rgba(15, 23, 42, 0.72);
       border-radius: var(--radius-sm);
       border: 1px solid var(--border);
       padding: 16px;
+    }
+
+    .split-card:hover, .mi-card:hover, .metric-chip:hover {
+      border-color: var(--border-hover);
     }
 
     .split-card-title { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted); margin-bottom: 10px; }
@@ -398,6 +752,7 @@
       color: var(--text-muted);
       border-top: 1px solid var(--border);
       transition: var(--transition);
+      background: rgba(7, 12, 20, 0.38);
     }
 
     .json-toggle:hover { color: var(--text); background: rgba(255,255,255,0.03); }
@@ -435,11 +790,12 @@
     }
 
     .metric-chip {
-      background: var(--surface);
+      background: rgba(15, 23, 42, 0.72);
       border: 1px solid var(--border);
       border-radius: 8px;
       padding: 8px 14px;
       font-size: 0.8rem;
+      transition: var(--transition);
     }
 
     .metric-chip .m-label { color: var(--text-muted); font-size: 0.7rem; font-weight: 600; text-transform: uppercase; }
@@ -457,10 +813,11 @@
     .model-info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 
     .mi-card {
-      background: var(--surface3);
+      background: rgba(15, 23, 42, 0.72);
       border-radius: var(--radius-sm);
       border: 1px solid var(--border);
       padding: 14px;
+      transition: var(--transition);
     }
 
     .mi-card .mi-title { font-size: 0.7rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 8px; }
@@ -473,7 +830,7 @@
       grid-template-columns: 300px 1fr;
       gap: 20px;
       padding: 20px;
-      background: var(--surface3);
+      background: rgba(15, 23, 42, 0.72);
       border-radius: var(--radius-sm);
       border: 1px solid var(--border);
       margin-bottom: 20px;
@@ -484,10 +841,11 @@
       border-radius: 8px;
       overflow: hidden;
       border: 1px solid var(--border);
-      background: #000;
+      background: #020617;
       display: flex;
       align-items: center;
       justify-content: center;
+      box-shadow: 0 14px 36px rgba(0,0,0,0.25);
     }
     .yt-thumbnail-container img {
       width: 100%;
@@ -521,14 +879,63 @@
 
     /* ── Responsive ── */
     @media (max-width: 768px) {
+      .container {
+        padding: 0 14px;
+      }
+
+      header {
+        padding: 22px;
+        margin-top: 14px;
+      }
+
+      .header-inner {
+        grid-template-columns: 1fr;
+      }
+
+      .logo {
+        width: 52px;
+        height: 52px;
+      }
+
+      .hero-stats {
+        grid-template-columns: 1fr;
+      }
+
+      .intro-layout, .workflow-grid, .plain-explain, .decision-strip {
+        grid-template-columns: 1fr;
+      }
+
+      .intro-copy {
+        padding: 22px;
+        border-right: 0;
+        border-bottom: 1px solid var(--border);
+      }
+
+      .pipeline-board {
+        padding: 18px;
+      }
+
       .yt-info-grid {
         grid-template-columns: 1fr;
       }
       .form-grid, .form-grid.cols-3, .split-grid, .model-info-grid {
         grid-template-columns: 1fr;
       }
-      .tabs { flex-direction: column; }
+      .tabs {
+        position: static;
+        flex-direction: column;
+      }
       .tab { min-width: auto; }
+      .card {
+        padding: 18px;
+      }
+      .level-display {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+      .btn-row, .btn {
+        width: 100%;
+      }
     }
   </style>
 </head>
@@ -537,10 +944,10 @@
   <!-- Header -->
   <header>
     <div class="header-inner">
-      <div class="logo">📊</div>
+      <div class="logo">ML</div>
       <div class="header-text">
         <h1>YouTube Engagement ML</h1>
-        <p>Pengujian Kombinasi Supervised &amp; Unsupervised Learning</p>
+        <p>Dashboard prediksi engagement video dengan kombinasi metadata pra-tayang, metrik pasca-tayang, dan analisis alignment model.</p>
       </div>
     </div>
     <div class="model-badges" style="margin-top:14px;">
@@ -548,8 +955,135 @@
       <span class="badge badge-blue">Supervised: Soft Voting Ensemble Acc=64.48%</span>
       <span class="badge badge-green">Bebas Data Leakage</span>
     </div>
+    <div class="hero-stats">
+      <div class="hero-stat">
+        <strong>3</strong>
+        <span>Kelas engagement: low, medium, high</span>
+      </div>
+      <div class="hero-stat">
+        <strong>2x</strong>
+        <span>Pipeline supervised dan unsupervised dalam satu workflow</span>
+      </div>
+      <div class="hero-stat">
+        <strong>API</strong>
+        <span>Terhubung ke endpoint FastAPI untuk prediksi real-time</span>
+      </div>
+    </div>
   </header>
 
+  <section class="intro-panel" id="intro-panel">
+    <div class="intro-layout">
+      <div class="intro-copy">
+        <div>
+          <div class="intro-eyebrow">Creator Decision Engine</div>
+          <h2>Bukan sekadar prediksi. Sistem ini membandingkan rencana konten dengan realitas engagement.</h2>
+          <p class="intro-lead">
+            Machine learning di proyek ini dipakai sebagai alat bantu keputusan untuk kreator. Metadata video dianalisis sebelum tayang, performa aktual dipetakan setelah tayang, lalu keduanya dicocokkan untuk melihat apakah sinyal awal benar-benar selaras dengan respons audiens.
+          </p>
+        </div>
+
+        <div class="decision-strip">
+          <div class="decision-item">
+            <span>Sebelum tayang</span>
+            <strong>Estimasi peluang Low, Medium, atau High dari metadata.</strong>
+          </div>
+          <div class="decision-item">
+            <span>Setelah tayang</span>
+            <strong>Klasterisasi performa aktual dari views, likes, comments.</strong>
+          </div>
+          <div class="decision-item">
+            <span>Validasi</span>
+            <strong>Alignment Rate mengukur ramalan vs kenyataan.</strong>
+          </div>
+        </div>
+
+        <div class="plain-explain">
+          <div class="plain-block">
+            <h3>Analogi singkat</h3>
+            <p>
+              Unsupervised seperti penyortir nilai setelah ujian selesai. Supervised seperti psikolog yang menebak hasil siswa sebelum ujian, hanya dari biodata awal.
+            </p>
+          </div>
+          <div class="plain-block">
+            <h3>Manfaat praktis</h3>
+            <p>
+              Kreator bisa menguji draf judul dan waktu unggah sebelum publikasi, lalu merevisi metadata jika potensi engagement terlihat rendah.
+            </p>
+          </div>
+        </div>
+
+        <div class="intro-actions">
+          <button class="btn btn-primary" onclick="enterTesting()">
+            <span class="btn-label">Go ke Pengujian Model</span>
+          </button>
+          <button class="btn btn-secondary" onclick="switchIntroInfo()">
+            Lihat Status Model
+          </button>
+        </div>
+      </div>
+
+      <div class="pipeline-board">
+        <div class="pipeline-title">
+          <h3>Alur notebook yang dipakai sistem</h3>
+          <span>LOW / MEDIUM / HIGH</span>
+        </div>
+
+        <div class="workflow-grid">
+          <article class="workflow-card">
+            <div class="node-icon">01</div>
+            <div>
+              <div class="step">supervised_engagement.ipynb</div>
+              <h3>Model prediktif pra-tayang</h3>
+              <p>
+                Ensemble klasifikasi membaca judul, panjang judul, channel, negara, dan waktu publish. Metrik masa depan seperti views, likes, dan komentar tidak dipakai agar bebas data leakage.
+              </p>
+              <div class="compact-meta">
+                <span>HistGradientBoosting</span>
+                <span>SGDClassifier</span>
+                <span>ExtraTrees</span>
+                <span>metadata only</span>
+              </div>
+            </div>
+          </article>
+
+          <article class="workflow-card">
+            <div class="node-icon">02</div>
+            <div>
+              <div class="step">unsupervised_engagement.ipynb</div>
+              <h3>Model deskriptif pasca-tayang</h3>
+              <p>
+                Klasterisasi memetakan performa aktual dari views, likes, comments, dan engagement rate. Mesin mencari batas alami antar level performa tanpa label manual.
+              </p>
+              <div class="compact-meta">
+                <span>MiniBatchKMeans</span>
+                <span>PowerTransformer</span>
+                <span>Scaler</span>
+                <span>F1 0.5581</span>
+              </div>
+            </div>
+          </article>
+
+          <article class="workflow-card">
+            <div class="node-icon">03</div>
+            <div>
+              <div class="step">kombinasi_supervised_dan_unsupervised.ipynb</div>
+              <h3>Pembuktian silang model</h3>
+              <p>
+                Sampel video di luar dataset diuji dengan dua model. Hasilnya menunjukkan apakah prediksi awal dari metadata punya korelasi matematis dengan realisasi engagement.
+              </p>
+              <div class="compact-meta">
+                <span>alignment rate</span>
+                <span>out-of-dataset</span>
+                <span>decision support</span>
+              </div>
+            </div>
+          </article>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <main class="app-shell" id="app-shell">
   <!-- Tabs -->
   <div class="tabs">
     <button class="tab active" onclick="switchTab('youtube', this)">🎥 Deteksi YouTube</button>
@@ -993,6 +1527,7 @@
   </div>
 
   <div style="height:40px;"></div>
+  </main>
 </div>
 
 <script>
@@ -1021,6 +1556,24 @@
   }
 
   // ─── Tab Switching ───
+  function enterTesting(targetTab) {
+    const shell = document.getElementById('app-shell');
+    const intro = document.getElementById('intro-panel');
+    shell.classList.add('visible');
+    if (intro) intro.style.display = 'none';
+
+    if (targetTab) {
+      const tabButton = document.querySelector(`.tab[onclick*="'${targetTab}'"]`);
+      if (tabButton) switchTab(targetTab, tabButton);
+    }
+
+    shell.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function switchIntroInfo() {
+    enterTesting('info');
+  }
+
   function switchTab(name, el) {
     document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
     document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));

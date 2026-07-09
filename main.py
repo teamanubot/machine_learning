@@ -8,6 +8,7 @@ Accessible at: api.rmun.tech/machine-learning
 import os
 import re
 import json
+import sys
 import joblib
 import warnings
 import numpy as np
@@ -71,6 +72,13 @@ _un_model = None
 _sup_model = None
 
 
+def register_pickle_compat_classes():
+    """Expose notebook-defined classes for older pickle artifacts."""
+    main_module = sys.modules.get("__main__")
+    if main_module is not None and not hasattr(main_module, "CategoryTargetEncoder"):
+        setattr(main_module, "CategoryTargetEncoder", CategoryTargetEncoder)
+
+
 def get_unsupervised_model():
     global _un_model
     if _un_model is None:
@@ -80,6 +88,7 @@ def get_unsupervised_model():
                 status_code=503,
                 detail="Model unsupervised belum ditraining. Jalankan train_models.py terlebih dahulu."
             )
+        register_pickle_compat_classes()
         _un_model = joblib.load(pkl_path)
     return _un_model
 
@@ -93,6 +102,7 @@ def get_supervised_model():
                 status_code=503,
                 detail="Model supervised belum ditraining. Jalankan train_models.py terlebih dahulu."
             )
+        register_pickle_compat_classes()
         _sup_model = joblib.load(pkl_path)
     return _sup_model
 
@@ -176,9 +186,10 @@ class YouTubeUrlInput(BaseModel):
 # ─────────────────────────────────────────────
 
 def build_supervised_features(title: str, channel: str, country: str, published_at: Optional[str], bundle: dict):
-    num_features = bundle["num_features"]
-    target_cat_features = bundle["target_cat_features"]
-    text_features = bundle["text_features"]
+    feature_cols = bundle["feature_cols"]
+    num_features = bundle.get("num_features") or feature_cols
+    target_cat_features = bundle.get("target_cat_features") or feature_cols
+    text_features = bundle.get("text_features") or feature_cols
 
     row = {}
 
@@ -229,7 +240,10 @@ def build_supervised_features(title: str, channel: str, country: str, published_
         row["publish_dow_sin"] = np.sin(2 * np.pi * dt.dayofweek / 7)
         row["publish_dow_cos"] = np.cos(2 * np.pi * dt.dayofweek / 7)
 
-    feature_cols = bundle["feature_cols"]
+    for col in feature_cols:
+        if col not in row:
+            row[col] = "unknown" if col in {"title_text", "channel", "country", "channel_country"} else 0
+
     X = pd.DataFrame([row])[feature_cols]
     return X
 
@@ -245,8 +259,10 @@ def predict_cluster(views: int, likes: int, comments: int, bundle: dict) -> dict
 
     pt = bundle["power_transformer"]
     scaler = bundle["scaler"]
-    kmeans = bundle["kmeans"]
+    kmeans = bundle.get("kmeans") or bundle.get("model")
     cluster_map = bundle["cluster_map"]
+    if kmeans is None:
+        raise ValueError("Artifact unsupervised tidak berisi model klaster.")
 
     X_pt = pt.transform(raw)
     X_scaled = scaler.transform(X_pt)
@@ -280,18 +296,38 @@ def predict_cluster(views: int, likes: int, comments: int, bundle: dict) -> dict
 def predict_class(title: str, channel: str, country: str, published_at: Optional[str], bundle: dict) -> dict:
     X = build_supervised_features(title, channel, country, published_at, bundle)
 
-    fitted_models = bundle["fitted_models"]
     ensemble_classes = bundle["ensemble_classes"]
-    total_weight = sum(w for _, _, w in fitted_models)
 
     all_proba = None
     proba_per_model = {}
 
-    for name, clf, weight in fitted_models:
+    if bundle.get("fitted_models"):
+        model_items = bundle["fitted_models"]
+    elif bundle.get("candidate_estimators"):
+        weights = bundle.get("candidate_weights", {})
+        model_items = [
+            (name, clf, float(weights.get(name, 1.0)))
+            for name, clf in bundle["candidate_estimators"].items()
+        ]
+    elif bundle.get("best_estimator") is not None:
+        model_items = [(bundle.get("model_name", "best_estimator"), bundle["best_estimator"], 1.0)]
+    else:
+        raise ValueError("Artifact supervised tidak berisi estimator yang dapat dipakai untuk prediksi.")
+
+    total_weight = 0.0
+
+    for name, clf, weight in model_items:
         if hasattr(clf, "predict_proba"):
             p = clf.predict_proba(X)[0]
+            clf_classes = getattr(clf, "classes_", ensemble_classes)
+            if list(clf_classes) != list(ensemble_classes):
+                aligned = np.zeros(len(ensemble_classes), dtype=float)
+                for cls, prob in zip(clf_classes, p):
+                    if cls in ensemble_classes:
+                        aligned[list(ensemble_classes).index(cls)] = prob
+                p = aligned
             proba_per_model[name] = {
-                cls: round(float(prob), 4)
+                str(cls): round(float(prob), 4)
                 for cls, prob in zip(ensemble_classes, p)
             }
             weighted_p = weight * p
@@ -299,13 +335,27 @@ def predict_class(title: str, channel: str, country: str, published_at: Optional
                 all_proba = weighted_p
             else:
                 all_proba += weighted_p
+            total_weight += weight
+
+    if all_proba is None or total_weight == 0:
+        estimator = bundle.get("best_estimator") or model_items[0][1]
+        predicted_class = str(estimator.predict(X)[0])
+        return {
+            "predicted_class": predicted_class,
+            "confidence": 1.0,
+            "class_probabilities": {
+                str(cls): 1.0 if str(cls) == predicted_class else 0.0
+                for cls in ensemble_classes
+            },
+            "model_probabilities": proba_per_model,
+        }
 
     all_proba /= total_weight
     pred_idx = int(np.argmax(all_proba))
     predicted_class = str(ensemble_classes[pred_idx])
 
     class_proba = {
-        cls: round(float(prob), 4)
+        str(cls): round(float(prob), 4)
         for cls, prob in zip(ensemble_classes, all_proba)
     }
     confidence = round(float(all_proba[pred_idx]), 4)
@@ -347,10 +397,11 @@ async def health_check():
     if un_ok:
         try:
             bundle = get_unsupervised_model()
+            metrics = bundle.get("metrics", {})
             result["unsupervised_info"] = {
                 "model_name": bundle.get("model_name"),
-                "f1_weighted_test": bundle.get("f1_weighted_test"),
-                "silhouette_test": bundle.get("silhouette_test"),
+                "f1_weighted_test": bundle.get("f1_weighted_test", metrics.get("test_f1_weighted")),
+                "silhouette_test": bundle.get("silhouette_test", metrics.get("test_silhouette")),
             }
         except Exception:
             pass
@@ -358,10 +409,12 @@ async def health_check():
     if sup_ok:
         try:
             bundle = get_supervised_model()
+            metrics = bundle.get("metrics", {})
             result["supervised_info"] = {
                 "model_name": bundle.get("model_name"),
-                "accuracy_test": bundle.get("accuracy_test"),
-                "weights": bundle.get("weights"),
+                "accuracy_test": bundle.get("accuracy_test", metrics.get("accuracy")),
+                "f1_weighted_test": bundle.get("f1_weighted_test", metrics.get("f1_weighted")),
+                "weights": bundle.get("weights", bundle.get("candidate_weights")),
             }
         except Exception:
             pass
@@ -614,4 +667,3 @@ async def predict_youtube(data: YouTubeUrlInput):
             ),
         }
     }
-
