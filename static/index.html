@@ -1,0 +1,1401 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>YouTube Engagement ML — Pengujian Model</title>
+  <meta name="description" content="Pengujian kombinasi Supervised dan Unsupervised Learning untuk klasifikasi kelas engagement video YouTube trending." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #0a0e1a;
+      --surface: #111827;
+      --surface2: #1a2233;
+      --surface3: #212d40;
+      --border: rgba(255,255,255,0.08);
+      --border-hover: rgba(255,255,255,0.18);
+      --text: #e8edf5;
+      --text-muted: #7c8ca0;
+      --text-dim: #4a5568;
+      --accent-blue: #3b82f6;
+      --accent-purple: #8b5cf6;
+      --accent-cyan: #06b6d4;
+      --accent-green: #10b981;
+      --accent-orange: #f59e0b;
+      --accent-red: #ef4444;
+      --low-color: #ef4444;
+      --medium-color: #f59e0b;
+      --high-color: #10b981;
+      --gradient-1: linear-gradient(135deg, #3b82f6, #8b5cf6);
+      --gradient-2: linear-gradient(135deg, #06b6d4, #3b82f6);
+      --gradient-3: linear-gradient(135deg, #8b5cf6, #ec4899);
+      --radius: 14px;
+      --radius-sm: 8px;
+      --shadow: 0 4px 24px rgba(0,0,0,0.4);
+      --shadow-lg: 0 8px 48px rgba(0,0,0,0.6);
+      --transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ── Background ── */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 80% 60% at 20% -10%, rgba(59,130,246,0.12) 0%, transparent 60%),
+        radial-gradient(ellipse 60% 40% at 80% 110%, rgba(139,92,246,0.10) 0%, transparent 60%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .container { max-width: 1100px; margin: 0 auto; padding: 0 24px; position: relative; z-index: 1; }
+
+    /* ── Header ── */
+    header {
+      padding: 40px 0 32px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 40px;
+    }
+
+    .header-inner { display: flex; align-items: center; gap: 18px; }
+
+    .logo {
+      width: 52px; height: 52px;
+      background: var(--gradient-1);
+      border-radius: 14px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 24px;
+      box-shadow: 0 0 24px rgba(59,130,246,0.35);
+      flex-shrink: 0;
+    }
+
+    .header-text h1 {
+      font-size: 1.6rem;
+      font-weight: 800;
+      background: var(--gradient-1);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      line-height: 1.2;
+    }
+
+    .header-text p {
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      margin-top: 4px;
+    }
+
+    .model-badges {
+      display: flex; gap: 8px; flex-wrap: wrap; margin-top: 16px;
+    }
+
+    .badge {
+      font-size: 0.7rem;
+      font-weight: 600;
+      padding: 4px 10px;
+      border-radius: 20px;
+      border: 1px solid;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .badge-blue { border-color: rgba(59,130,246,0.5); color: #93c5fd; background: rgba(59,130,246,0.1); }
+    .badge-purple { border-color: rgba(139,92,246,0.5); color: #c4b5fd; background: rgba(139,92,246,0.1); }
+    .badge-green { border-color: rgba(16,185,129,0.5); color: #6ee7b7; background: rgba(16,185,129,0.1); }
+
+    /* ── Tabs ── */
+    .tabs {
+      display: flex; gap: 4px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 6px;
+      margin-bottom: 32px;
+      flex-wrap: wrap;
+    }
+
+    .tab {
+      flex: 1;
+      min-width: 140px;
+      padding: 10px 16px;
+      border: none;
+      background: transparent;
+      color: var(--text-muted);
+      font-family: 'Inter', sans-serif;
+      font-size: 0.85rem;
+      font-weight: 500;
+      cursor: pointer;
+      border-radius: var(--radius-sm);
+      transition: var(--transition);
+      display: flex; align-items: center; justify-content: center; gap: 6px;
+    }
+
+    .tab:hover { background: var(--surface2); color: var(--text); }
+
+    .tab.active {
+      background: var(--gradient-1);
+      color: white;
+      font-weight: 600;
+      box-shadow: 0 2px 12px rgba(59,130,246,0.3);
+    }
+
+    .tab-content { display: none; }
+    .tab-content.active { display: block; animation: fadeIn 0.3s ease; }
+
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* ── Card ── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+      margin-bottom: 20px;
+      transition: var(--transition);
+    }
+
+    .card:hover { border-color: var(--border-hover); }
+
+    .card-title {
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 20px;
+      display: flex; align-items: center; gap: 8px;
+    }
+
+    .card-title .icon {
+      width: 28px; height: 28px;
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px;
+    }
+
+    .icon-blue { background: rgba(59,130,246,0.15); }
+    .icon-purple { background: rgba(139,92,246,0.15); }
+    .icon-green { background: rgba(16,185,129,0.15); }
+
+    /* ── Form ── */
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .form-grid.cols-3 { grid-template-columns: 1fr 1fr 1fr; }
+    .form-group { display: flex; flex-direction: column; gap: 8px; }
+    .form-group.full { grid-column: 1 / -1; }
+
+    label {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    input, select, textarea {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text);
+      font-family: 'Inter', sans-serif;
+      font-size: 0.92rem;
+      padding: 11px 14px;
+      transition: var(--transition);
+      outline: none;
+      width: 100%;
+    }
+
+    input:focus, select:focus, textarea:focus {
+      border-color: var(--accent-blue);
+      box-shadow: 0 0 0 3px rgba(59,130,246,0.15);
+      background: var(--surface3);
+    }
+
+    input::placeholder, textarea::placeholder { color: var(--text-dim); }
+
+    select option { background: var(--surface2); }
+
+    .hint { font-size: 0.75rem; color: var(--text-dim); margin-top: 4px; }
+
+    /* ── Button ── */
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+      padding: 12px 24px;
+      border: none; border-radius: var(--radius-sm);
+      font-family: 'Inter', sans-serif;
+      font-size: 0.9rem; font-weight: 600;
+      cursor: pointer;
+      transition: var(--transition);
+      position: relative; overflow: hidden;
+    }
+
+    .btn::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: rgba(255,255,255,0);
+      transition: var(--transition);
+    }
+
+    .btn:hover::after { background: rgba(255,255,255,0.08); }
+    .btn:active::after { background: rgba(255,255,255,0.15); }
+
+    .btn-primary {
+      background: var(--gradient-1);
+      color: white;
+      box-shadow: 0 4px 16px rgba(59,130,246,0.35);
+    }
+
+    .btn-primary:hover { box-shadow: 0 6px 24px rgba(59,130,246,0.5); transform: translateY(-1px); }
+
+    .btn-secondary {
+      background: var(--surface2);
+      color: var(--text-muted);
+      border: 1px solid var(--border);
+    }
+
+    .btn-secondary:hover { border-color: var(--border-hover); color: var(--text); }
+
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none !important; }
+
+    .btn-row { display: flex; gap: 12px; align-items: center; margin-top: 20px; flex-wrap: wrap; }
+
+    /* ── Loading Spinner ── */
+    .spinner {
+      width: 18px; height: 18px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      display: none;
+    }
+
+    .loading .spinner { display: inline-block; }
+    .loading .btn-label { display: none; }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Result Panel ── */
+    .result-panel {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      display: none;
+    }
+
+    .result-panel.visible { display: block; animation: fadeIn 0.4s ease; }
+
+    .result-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; gap: 12px;
+    }
+
+    .result-status {
+      font-size: 0.8rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.08em;
+    }
+
+    .status-success { color: var(--accent-green); }
+    .status-error { color: var(--accent-red); }
+
+    /* ── Engagement Level Indicator ── */
+    .level-display {
+      display: flex; align-items: center; gap: 16px;
+      padding: 20px 24px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .level-badge {
+      padding: 8px 20px;
+      border-radius: 24px;
+      font-size: 1.1rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+
+    .level-low { background: rgba(239,68,68,0.15); color: #fca5a5; border: 1px solid rgba(239,68,68,0.3); }
+    .level-medium { background: rgba(245,158,11,0.15); color: #fcd34d; border: 1px solid rgba(245,158,11,0.3); }
+    .level-high { background: rgba(16,185,129,0.15); color: #6ee7b7; border: 1px solid rgba(16,185,129,0.3); }
+
+    .level-info { flex: 1; }
+    .level-info .level-label { font-size: 0.75rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; }
+    .level-info .level-value { font-size: 1.5rem; font-weight: 800; margin-top: 2px; }
+    .level-info .level-sub { font-size: 0.8rem; color: var(--text-muted); margin-top: 2px; }
+
+    /* ── Proba Bars ── */
+    .proba-section { padding: 16px 20px; }
+    .proba-title { font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 12px; }
+
+    .proba-bar { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+    .proba-class { font-size: 0.82rem; font-weight: 600; width: 60px; }
+    .proba-track { flex: 1; height: 8px; background: var(--surface3); border-radius: 4px; overflow: hidden; }
+    .proba-fill { height: 100%; border-radius: 4px; transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1); }
+    .proba-fill-low { background: linear-gradient(90deg, #ef4444, #f87171); }
+    .proba-fill-medium { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
+    .proba-fill-high { background: linear-gradient(90deg, #10b981, #34d399); }
+    .proba-pct { font-size: 0.8rem; font-weight: 600; width: 44px; text-align: right; font-family: 'JetBrains Mono', monospace; }
+
+    /* ── Alignment Block ── */
+    .alignment-block {
+      margin: 20px;
+      padding: 16px 20px;
+      border-radius: var(--radius-sm);
+      border: 1px solid;
+    }
+
+    .alignment-aligned {
+      background: rgba(16,185,129,0.08);
+      border-color: rgba(16,185,129,0.25);
+    }
+
+    .alignment-not {
+      background: rgba(245,158,11,0.08);
+      border-color: rgba(245,158,11,0.25);
+    }
+
+    .alignment-icon { font-size: 1.4rem; margin-bottom: 8px; }
+    .alignment-text { font-size: 0.88rem; line-height: 1.5; }
+
+    /* ── Split Layout for Combined ── */
+    .split-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      padding: 20px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .split-card {
+      background: var(--surface);
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+      padding: 16px;
+    }
+
+    .split-card-title { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted); margin-bottom: 10px; }
+
+    /* ── JSON View ── */
+    .json-toggle {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 12px 20px;
+      cursor: pointer;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      border-top: 1px solid var(--border);
+      transition: var(--transition);
+    }
+
+    .json-toggle:hover { color: var(--text); background: rgba(255,255,255,0.03); }
+
+    .json-body {
+      overflow-x: auto;
+      padding: 16px 20px;
+      display: none;
+      border-top: 1px solid var(--border);
+    }
+
+    .json-body pre {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.78rem;
+      color: #a5b4fc;
+      line-height: 1.6;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    /* ── Error ── */
+    .error-block {
+      padding: 16px 20px;
+      color: #fca5a5;
+      font-size: 0.88rem;
+      background: rgba(239,68,68,0.08);
+      border-top: 1px solid rgba(239,68,68,0.2);
+    }
+
+    /* ── Metrics Grid ── */
+    .metrics-row {
+      display: flex; gap: 12px; flex-wrap: wrap;
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .metric-chip {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 8px 14px;
+      font-size: 0.8rem;
+    }
+
+    .metric-chip .m-label { color: var(--text-muted); font-size: 0.7rem; font-weight: 600; text-transform: uppercase; }
+    .metric-chip .m-value { font-family: 'JetBrains Mono', monospace; font-weight: 700; margin-top: 2px; }
+
+    /* ── Engagement Rate display ── */
+    .er-display {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: var(--accent-cyan);
+    }
+
+    /* ── Model info section ── */
+    .model-info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+    .mi-card {
+      background: var(--surface3);
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+      padding: 14px;
+    }
+
+    .mi-card .mi-title { font-size: 0.7rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 8px; }
+    .mi-card .mi-name { font-size: 0.82rem; font-weight: 600; font-family: 'JetBrains Mono', monospace; color: var(--accent-cyan); }
+    .mi-card .mi-metric { font-size: 0.78rem; color: var(--text-muted); margin-top: 4px; }
+
+    /* ── YouTube Auto-Detect Styles ── */
+    .yt-info-grid {
+      display: grid;
+      grid-template-columns: 300px 1fr;
+      gap: 20px;
+      padding: 20px;
+      background: var(--surface3);
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+      margin-bottom: 20px;
+    }
+    .yt-thumbnail-container {
+      width: 100%;
+      height: 168px;
+      border-radius: 8px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      background: #000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .yt-thumbnail-container img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .yt-meta-details {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .yt-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--text);
+      line-height: 1.4;
+    }
+    .yt-fields {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 8px;
+      margin-top: 8px;
+    }
+    .yt-field-item {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+    }
+    .yt-field-item strong {
+      color: var(--text);
+    }
+
+    /* ── Responsive ── */
+    @media (max-width: 768px) {
+      .yt-info-grid {
+        grid-template-columns: 1fr;
+      }
+      .form-grid, .form-grid.cols-3, .split-grid, .model-info-grid {
+        grid-template-columns: 1fr;
+      }
+      .tabs { flex-direction: column; }
+      .tab { min-width: auto; }
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+  <!-- Header -->
+  <header>
+    <div class="header-inner">
+      <div class="logo">📊</div>
+      <div class="header-text">
+        <h1>YouTube Engagement ML</h1>
+        <p>Pengujian Kombinasi Supervised &amp; Unsupervised Learning</p>
+      </div>
+    </div>
+    <div class="model-badges" style="margin-top:14px;">
+      <span class="badge badge-purple">Unsupervised: MiniBatchKMeans F1=0.5577</span>
+      <span class="badge badge-blue">Supervised: Soft Voting Ensemble Acc=64.48%</span>
+      <span class="badge badge-green">Bebas Data Leakage</span>
+    </div>
+  </header>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('youtube', this)">🎥 Deteksi YouTube</button>
+    <button class="tab" onclick="switchTab('unsupervised', this)">🔵 Unsupervised</button>
+    <button class="tab" onclick="switchTab('supervised', this)">🔴 Supervised</button>
+    <button class="tab" onclick="switchTab('combined', this)">⚡ Kombinasi</button>
+    <button class="tab" onclick="switchTab('info', this)">ℹ️ Info Model</button>
+  </div>
+
+  <!-- ── TAB: YOUTUBE AUTO-DETECT ── -->
+  <div id="tab-youtube" class="tab-content active">
+    <div class="card">
+      <div class="card-title">
+        <div class="icon icon-purple">🎥</div>
+        Deteksi Otomatis Video YouTube via URL / ID
+      </div>
+      <div class="form-group">
+        <label>URL Video atau Video ID YouTube</label>
+        <input type="text" id="yt-url" placeholder="Contoh: https://www.youtube.com/watch?v=dQw4w9WgXcQ atau dQw4w9WgXcQ" value="https://www.youtube.com/watch?v=dQw4w9WgXcQ" />
+        <div class="hint">Sistem akan secara otomatis mengambil data (judul, channel, views, dll.) lalu mendeteksi kelas engagement menggunakan model terbaik.</div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-primary" id="btn-yt" onclick="predictYouTube()">
+          <span class="spinner"></span>
+          <span class="btn-label">🔍 Deteksi &amp; Analisis</span>
+        </button>
+        <button class="btn btn-secondary" onclick="fillExample('yt')">Isi Contoh</button>
+      </div>
+    </div>
+
+    <div class="result-panel" id="result-yt">
+      <div class="result-header">
+        <span class="result-status status-success">✓ Hasil Deteksi Otomatis</span>
+        <span id="yt-metadata-method" style="font-size:0.75rem; color:var(--text-muted); font-family:'JetBrains Mono',monospace; margin-left:auto;"></span>
+      </div>
+
+      <!-- Warning Imputasi Data (jika ada) -->
+      <div id="yt-warning-block" class="alignment-block" style="display:none; margin-bottom:15px; border-color:var(--accent-orange); background:rgba(245,158,11,0.08); align-items:center; gap:10px; padding:12px 16px; border-radius:var(--radius-sm); border:1px solid rgba(245,158,11,0.3);">
+        <div style="font-size:1.2rem;">⚠️</div>
+        <div id="yt-warning-text" style="color:var(--accent-orange); font-size:0.82rem; line-height:1.4;"></div>
+      </div>
+
+      <!-- Info Video YouTube (Thumbnail + Meta) -->
+      <div class="yt-info-grid">
+        <div class="yt-thumbnail-container">
+          <img id="yt-res-thumbnail" src="" alt="Thumbnail Video" onerror="this.src='https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7?w=500&auto=format&fit=crop&q=60';" />
+        </div>
+        <div class="yt-meta-details">
+          <div class="yt-title" id="yt-res-title">—</div>
+          <div class="yt-fields">
+            <div class="yt-field-item">Channel: <strong id="yt-res-channel">—</strong></div>
+            <div class="yt-field-item">Tanggal Publish: <strong id="yt-res-date">—</strong></div>
+            <div class="yt-field-item">Views: <strong id="yt-res-views">—</strong></div>
+            <div class="yt-field-item">Video ID: <strong id="yt-res-id">—</strong></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Hasil Prediksi -->
+      <div class="split-grid">
+        <div class="split-card">
+          <div class="split-card-title">🔴 Prediksi Supervised (Pra-Tayang)</div>
+          <div id="yt-sup-badge" class="level-badge level-medium" style="display:inline-block; margin-bottom:10px;">—</div>
+          <div class="proba-section" style="padding:0;">
+            <div class="proba-bar" style="margin-bottom:8px;">
+              <span class="proba-class" style="font-size:0.75rem;">Low</span>
+              <div class="proba-track"><div class="proba-fill proba-fill-low" id="yt-bar-low" style="width:0%"></div></div>
+              <span class="proba-pct" id="yt-pct-low">0%</span>
+            </div>
+            <div class="proba-bar" style="margin-bottom:8px;">
+              <span class="proba-class" style="font-size:0.75rem;">Medium</span>
+              <div class="proba-track"><div class="proba-fill proba-fill-medium" id="yt-bar-medium" style="width:0%"></div></div>
+              <span class="proba-pct" id="yt-pct-medium">0%</span>
+            </div>
+            <div class="proba-bar">
+              <span class="proba-class" style="font-size:0.75rem;">High</span>
+              <div class="proba-track"><div class="proba-fill proba-fill-high" id="yt-bar-high" style="width:0%"></div></div>
+              <span class="proba-pct" id="yt-pct-high">0%</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="split-card">
+          <div class="split-card-title">🔵 Klasterisasi Unsupervised (Pasca-Tayang)</div>
+          <div id="yt-un-badge" class="level-badge level-medium" style="display:inline-block; margin-bottom:10px;">—</div>
+          <div class="metrics-row" style="padding:0; flex-direction:column; gap:8px;">
+            <div class="metric-chip" style="width:fit-content;">
+              <div class="m-label">Engagement Rate</div>
+              <div class="m-value" id="yt-er">—</div>
+            </div>
+            <div class="metric-chip" style="width:fit-content;">
+              <div class="m-label">Confidence</div>
+              <div class="m-value" id="yt-un-conf">—</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Alignment Analysis -->
+      <div id="yt-alignment" class="alignment-block" style="display:none;">
+        <div class="alignment-icon" id="yt-align-icon"></div>
+        <div class="alignment-text" id="yt-align-text"></div>
+        <div style="margin-top:8px; font-size:0.75rem; color:var(--text-muted);">
+          Kesesuaian ini mengindikasikan apakah performa video (unsupervised) sejalan dengan karakteristik judul dan channel-nya (supervised).
+        </div>
+      </div>
+
+      <div class="json-toggle" onclick="toggleJson('yt')">
+        <span>Raw JSON Response</span><span id="yt-json-icon">▶</span>
+      </div>
+      <div class="json-body" id="yt-json-body">
+        <pre id="yt-json-pre"></pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── TAB: UNSUPERVISED ── -->
+  <div id="tab-unsupervised" class="tab-content">
+    <div class="card">
+      <div class="card-title">
+        <div class="icon icon-blue">🔵</div>
+        Input Metrik Pasca-Tayang
+      </div>
+      <div class="form-grid cols-3">
+        <div class="form-group">
+          <label>Views</label>
+          <input type="number" id="un-views" value="1500000" min="1" />
+        </div>
+        <div class="form-group">
+          <label>Likes</label>
+          <input type="number" id="un-likes" value="85000" min="0" />
+        </div>
+        <div class="form-group">
+          <label>Comments</label>
+          <input type="number" id="un-comments" value="3200" min="0" />
+        </div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-primary" id="btn-un" onclick="predictUnsupervised()">
+          <span class="spinner"></span>
+          <span class="btn-label">🔵 Prediksi Klaster</span>
+        </button>
+        <button class="btn btn-secondary" onclick="fillExample('un')">Isi Contoh</button>
+      </div>
+    </div>
+
+    <div class="result-panel" id="result-un">
+      <div class="result-header">
+        <span class="result-status status-success">✓ Hasil Prediksi Unsupervised</span>
+        <span id="un-model-name" style="font-size:0.75rem; color:var(--text-dim); font-family:'JetBrains Mono',monospace; margin-left:auto;"></span>
+      </div>
+      <div class="level-display">
+        <div class="level-info">
+          <div class="level-label">Klaster Engagement</div>
+          <div class="level-value" id="un-level-value">—</div>
+          <div class="level-sub">Berdasarkan analisis metrik aktual pasca-tayang</div>
+        </div>
+        <div id="un-level-badge" class="level-badge level-medium">—</div>
+      </div>
+      <div class="metrics-row">
+        <div class="metric-chip">
+          <div class="m-label">Engagement Rate</div>
+          <div class="m-value" id="un-er">—</div>
+        </div>
+        <div class="metric-chip">
+          <div class="m-label">Cluster ID</div>
+          <div class="m-value" id="un-cluster-id">—</div>
+        </div>
+        <div class="metric-chip">
+          <div class="m-label">Confidence Score</div>
+          <div class="m-value" id="un-confidence">—</div>
+        </div>
+      </div>
+      <div class="json-toggle" onclick="toggleJson('un')">
+        <span>Raw JSON Response</span><span id="un-json-icon">▶</span>
+      </div>
+      <div class="json-body" id="un-json-body">
+        <pre id="un-json-pre"></pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── TAB: SUPERVISED ── -->
+  <div id="tab-supervised" class="tab-content">
+    <div class="card">
+      <div class="card-title">
+        <div class="icon icon-purple">🔴</div>
+        Input Metadata Pra-Tayang
+      </div>
+      <div class="form-grid">
+        <div class="form-group full">
+          <label>Judul Video</label>
+          <input type="text" id="sup-title" value="Gol Spektakuler Messi di Final Champions League! #shorts" />
+        </div>
+        <div class="form-group">
+          <label>Channel</label>
+          <input type="text" id="sup-channel" value="ESPN Football" placeholder="Nama channel..." />
+        </div>
+        <div class="form-group">
+          <label>Negara</label>
+          <input type="text" id="sup-country" value="US" placeholder="Kode negara (US, ID, ...)" />
+        </div>
+        <div class="form-group full">
+          <label>Tanggal Publish (opsional)</label>
+          <input type="datetime-local" id="sup-date" value="2025-03-15T19:00" />
+          <div class="hint">Waktu publikasi memengaruhi prediksi (jam, hari dalam seminggu, dll.)</div>
+        </div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-primary" id="btn-sup" onclick="predictSupervised()">
+          <span class="spinner"></span>
+          <span class="btn-label">🔴 Prediksi Kelas</span>
+        </button>
+        <button class="btn btn-secondary" onclick="fillExample('sup')">Isi Contoh</button>
+      </div>
+    </div>
+
+    <div class="result-panel" id="result-sup">
+      <div class="result-header">
+        <span class="result-status status-success">✓ Hasil Prediksi Supervised</span>
+        <span id="sup-model-name" style="font-size:0.75rem; color:var(--text-dim); font-family:'JetBrains Mono',monospace; margin-left:auto;"></span>
+      </div>
+      <div class="level-display">
+        <div class="level-info">
+          <div class="level-label">Prediksi Kelas Engagement</div>
+          <div class="level-value" id="sup-level-value">—</div>
+          <div class="level-sub">Estimasi potensi berdasarkan metadata saja (bebas leakage)</div>
+        </div>
+        <div id="sup-level-badge" class="level-badge level-medium">—</div>
+      </div>
+      <div class="proba-section">
+        <div class="proba-title">Probabilitas per Kelas (Weighted Soft Voting)</div>
+        <div class="proba-bar">
+          <span class="proba-class">🔴 Low</span>
+          <div class="proba-track"><div class="proba-fill proba-fill-low" id="sup-bar-low" style="width:0%"></div></div>
+          <span class="proba-pct" id="sup-pct-low">0%</span>
+        </div>
+        <div class="proba-bar">
+          <span class="proba-class">🟡 Medium</span>
+          <div class="proba-track"><div class="proba-fill proba-fill-medium" id="sup-bar-medium" style="width:0%"></div></div>
+          <span class="proba-pct" id="sup-pct-medium">0%</span>
+        </div>
+        <div class="proba-bar">
+          <span class="proba-class">🟢 High</span>
+          <div class="proba-track"><div class="proba-fill proba-fill-high" id="sup-bar-high" style="width:0%"></div></div>
+          <span class="proba-pct" id="sup-pct-high">0%</span>
+        </div>
+      </div>
+      <div class="json-toggle" onclick="toggleJson('sup')">
+        <span>Raw JSON Response</span><span id="sup-json-icon">▶</span>
+      </div>
+      <div class="json-body" id="sup-json-body">
+        <pre id="sup-json-pre"></pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── TAB: COMBINED ── -->
+  <div id="tab-combined" class="tab-content">
+    <div class="card">
+      <div class="card-title">
+        <div class="icon icon-green">⚡</div>
+        Input Lengkap (Metadata + Metrik)
+      </div>
+      <div class="form-grid">
+        <div class="form-group full">
+          <label>Judul Video</label>
+          <input type="text" id="comb-title" value="Gol Spektakuler Messi di Final Champions League! #shorts" />
+        </div>
+        <div class="form-group">
+          <label>Channel</label>
+          <input type="text" id="comb-channel" value="ESPN Football" />
+        </div>
+        <div class="form-group">
+          <label>Negara</label>
+          <input type="text" id="comb-country" value="US" />
+        </div>
+        <div class="form-group full">
+          <label>Tanggal Publish</label>
+          <input type="datetime-local" id="comb-date" value="2025-03-15T19:00" />
+        </div>
+      </div>
+      <div style="height:1px; background:var(--border); margin:16px 0;"></div>
+      <div class="form-grid cols-3">
+        <div class="form-group">
+          <label>Views (aktual)</label>
+          <input type="number" id="comb-views" value="1500000" min="1" />
+        </div>
+        <div class="form-group">
+          <label>Likes (aktual)</label>
+          <input type="number" id="comb-likes" value="85000" min="0" />
+        </div>
+        <div class="form-group">
+          <label>Comments (aktual)</label>
+          <input type="number" id="comb-comments" value="3200" min="0" />
+        </div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-primary" id="btn-comb" onclick="predictCombined()">
+          <span class="spinner"></span>
+          <span class="btn-label">⚡ Analisis Kombinasi</span>
+        </button>
+        <button class="btn btn-secondary" onclick="fillExample('comb')">Isi Contoh</button>
+      </div>
+    </div>
+
+    <div class="result-panel" id="result-comb">
+      <div class="result-header">
+        <span class="result-status status-success">✓ Hasil Analisis Kombinasi</span>
+      </div>
+
+      <!-- Split result: supervised | unsupervised -->
+      <div class="split-grid">
+        <div class="split-card">
+          <div class="split-card-title">🔴 Supervised (Pra-Tayang)</div>
+          <div id="comb-sup-badge" class="level-badge level-medium" style="display:inline-block; margin-bottom:10px;">—</div>
+          <div class="proba-section" style="padding:0;">
+            <div class="proba-bar" style="margin-bottom:8px;">
+              <span class="proba-class" style="font-size:0.75rem;">Low</span>
+              <div class="proba-track"><div class="proba-fill proba-fill-low" id="comb-bar-low" style="width:0%"></div></div>
+              <span class="proba-pct" id="comb-pct-low">0%</span>
+            </div>
+            <div class="proba-bar" style="margin-bottom:8px;">
+              <span class="proba-class" style="font-size:0.75rem;">Medium</span>
+              <div class="proba-track"><div class="proba-fill proba-fill-medium" id="comb-bar-medium" style="width:0%"></div></div>
+              <span class="proba-pct" id="comb-pct-medium">0%</span>
+            </div>
+            <div class="proba-bar">
+              <span class="proba-class" style="font-size:0.75rem;">High</span>
+              <div class="proba-track"><div class="proba-fill proba-fill-high" id="comb-bar-high" style="width:0%"></div></div>
+              <span class="proba-pct" id="comb-pct-high">0%</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="split-card">
+          <div class="split-card-title">🔵 Unsupervised (Pasca-Tayang)</div>
+          <div id="comb-un-badge" class="level-badge level-medium" style="display:inline-block; margin-bottom:10px;">—</div>
+          <div class="metrics-row" style="padding:0; flex-direction:column; gap:8px;">
+            <div class="metric-chip" style="width:fit-content;">
+              <div class="m-label">Engagement Rate</div>
+              <div class="m-value" id="comb-er">—</div>
+            </div>
+            <div class="metric-chip" style="width:fit-content;">
+              <div class="m-label">Confidence</div>
+              <div class="m-value" id="comb-un-conf">—</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Alignment Analysis -->
+      <div id="comb-alignment" class="alignment-block alignment-not" style="display:none;">
+        <div class="alignment-icon" id="comb-align-icon"></div>
+        <div class="alignment-text" id="comb-align-text"></div>
+        <div style="margin-top:8px; font-size:0.75rem; color:var(--text-muted);">
+          Alignment Rate Global: <strong>~63.85%</strong> (eksperimen data 2025)
+        </div>
+      </div>
+
+      <div class="json-toggle" onclick="toggleJson('comb')">
+        <span>Raw JSON Response</span><span id="comb-json-icon">▶</span>
+      </div>
+      <div class="json-body" id="comb-json-body">
+        <pre id="comb-json-pre"></pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── TAB: INFO ── -->
+  <div id="tab-info" class="tab-content">
+    <div class="card">
+      <div class="card-title">
+        <div class="icon icon-blue">📈</div>
+        Status Model
+      </div>
+      <div class="model-info-grid" id="model-info-grid">
+        <div class="mi-card" style="grid-column:1/-1; text-align:center; padding:24px; color:var(--text-muted);">
+          Klik untuk memuat info model...
+        </div>
+      </div>
+      <div class="btn-row" style="margin-top:16px;">
+        <button class="btn btn-secondary" onclick="loadModelInfo()">🔄 Muat Ulang Status</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">
+        <div class="icon icon-purple">📚</div>
+        Arsitektur Model
+      </div>
+
+      <div style="display:grid; gap:16px;">
+        <div style="background:var(--surface2); border-radius:var(--radius-sm); border:1px solid var(--border); padding:18px;">
+          <div style="font-size:0.75rem; font-weight:700; color:var(--accent-cyan); text-transform:uppercase; letter-spacing:0.08em; margin-bottom:10px;">🔵 Unsupervised — MiniBatchKMeans (Model Terbaik dari 16 Eksperimen)</div>
+          <div style="font-size:0.85rem; line-height:1.7; color:var(--text-muted);">
+            Pipeline: <strong style="color:var(--text);">PowerTransformer(Yeo-Johnson)</strong> → <strong style="color:var(--text);">StandardScaler</strong> → <strong style="color:var(--text);">IsolationForest(contamination=3%)</strong> → <strong style="color:var(--text);">MiniBatchKMeans(k=3, batch=4096)</strong><br/>
+            Fitur input: <code style="color:#a5b4fc;">views, likes, comments, engagement_rate</code><br/>
+            Evaluasi: F1 Weighted Test = <strong style="color:var(--accent-green);">0.5577</strong> | Silhouette = <strong style="color:var(--accent-green);">0.2864</strong>
+          </div>
+        </div>
+
+        <div style="background:var(--surface2); border-radius:var(--radius-sm); border:1px solid var(--border); padding:18px;">
+          <div style="font-size:0.75rem; font-weight:700; color:var(--accent-purple); text-transform:uppercase; letter-spacing:0.08em; margin-bottom:10px;">🔴 Supervised — Weighted Soft Voting Ensemble</div>
+          <div style="font-size:0.85rem; line-height:1.7; color:var(--text-muted);">
+            Komponen: <strong style="color:var(--text);">ExtraTrees(bobot 2x) + HGB-balanced(1x) + HGB-accuracy(1x) + SGD-TF-IDF(bobot 2x)</strong><br/>
+            Fitur: <code style="color:#a5b4fc;">title_text</code> (TF-IDF + SVD50) + fitur numerik dari judul + tanggal publish + target encoding channel/country<br/>
+            Evaluasi: Accuracy = <strong style="color:var(--accent-green);">64.48%</strong> | F1 Weighted = <strong style="color:var(--accent-green);">64.06%</strong><br/>
+            Split: <strong style="color:var(--text);">1:1 Train/Test</strong> + undersampling 1:1:1 pada train
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">
+        <div class="icon icon-green">🎯</div>
+        Kelas Engagement
+      </div>
+      <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px;">
+        <div style="background:rgba(239,68,68,0.08); border:1px solid rgba(239,68,68,0.2); border-radius:var(--radius-sm); padding:16px; text-align:center;">
+          <div style="font-size:1.5rem; margin-bottom:6px;">🔴</div>
+          <div style="font-weight:800; color:#fca5a5; margin-bottom:6px;">LOW</div>
+          <div style="font-size:0.8rem; color:var(--text-muted);">Engagement Rate ≤ 2%</div>
+          <div style="font-size:0.78rem; color:var(--text-dim); margin-top:6px;">Views banyak, interaksi minim (typical berita)</div>
+        </div>
+        <div style="background:rgba(245,158,11,0.08); border:1px solid rgba(245,158,11,0.2); border-radius:var(--radius-sm); padding:16px; text-align:center;">
+          <div style="font-size:1.5rem; margin-bottom:6px;">🟡</div>
+          <div style="font-weight:800; color:#fcd34d; margin-bottom:6px;">MEDIUM</div>
+          <div style="font-size:0.8rem; color:var(--text-muted);">Engagement Rate 2–6%</div>
+          <div style="font-size:0.78rem; color:var(--text-dim); margin-top:6px;">Keseimbangan views dan interaksi aktif</div>
+        </div>
+        <div style="background:rgba(16,185,129,0.08); border:1px solid rgba(16,185,129,0.2); border-radius:var(--radius-sm); padding:16px; text-align:center;">
+          <div style="font-size:1.5rem; margin-bottom:6px;">🟢</div>
+          <div style="font-weight:800; color:#6ee7b7; margin-bottom:6px;">HIGH</div>
+          <div style="font-size:0.8rem; color:var(--text-muted);">Engagement Rate > 6%</div>
+          <div style="font-size:0.78rem; color:var(--text-dim); margin-top:6px;">Proporsi interaksi aktif sangat besar</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div style="height:40px;"></div>
+</div>
+
+<script>
+  const API_BASE = '/machine-learning';
+
+  // Simpan HTML asli panel hasil untuk pemulihan jika terjadi error
+  const originalPanels = {};
+  window.addEventListener('DOMContentLoaded', () => {
+    ['result-un', 'result-sup', 'result-comb', 'result-yt'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) originalPanels[id] = el.innerHTML;
+    });
+  });
+
+  // Helper untuk membaca respons JSON secara aman
+  async function safeParseJson(res) {
+    const contentType = res.headers.get("content-type");
+    if (contentType && contentType.includes("application/json")) {
+      return await res.json();
+    } else {
+      const text = await res.text();
+      // Bersihkan tag HTML untuk mengambil pesan teks murni
+      const cleanText = text.replace(/<[^>]*>/g, "").replace(/\s+/g, " ").trim().substring(0, 120);
+      throw new Error(`Respon server bukan JSON (HTTP ${res.status}): ${cleanText || 'Respon kosong'}...`);
+    }
+  }
+
+  // ─── Tab Switching ───
+  function switchTab(name, el) {
+    document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.getElementById('tab-' + name).classList.add('active');
+    el.classList.add('active');
+    if (name === 'info') loadModelInfo();
+  }
+
+  // ─── Fill Examples ───
+  const examples = {
+    yt: {
+      url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ'
+    },
+    un: { views: 5200000, likes: 42000, comments: 800 },
+    sup: {
+      title: 'Breaking News: Gempa Bumi Dahsyat Mengguncang Jakarta | KOMPAS TV',
+      channel: 'Kompas TV',
+      country: 'ID',
+      date: '2025-06-10T08:30'
+    },
+    comb: {
+      title: 'Ronaldo Cetak Hat-trick di Laga Final! Goals & Highlights #CR7',
+      channel: 'Real Madrid TV',
+      country: 'ES',
+      date: '2025-04-20T21:00',
+      views: 8500000,
+      likes: 720000,
+      comments: 28000
+    }
+  };
+
+  function fillExample(type) {
+    const ex = examples[type];
+    if (type === 'yt') {
+      document.getElementById('yt-url').value = ex.url;
+    } else if (type === 'un') {
+      document.getElementById('un-views').value = ex.views;
+      document.getElementById('un-likes').value = ex.likes;
+      document.getElementById('un-comments').value = ex.comments;
+    } else if (type === 'sup') {
+      document.getElementById('sup-title').value = ex.title;
+      document.getElementById('sup-channel').value = ex.channel;
+      document.getElementById('sup-country').value = ex.country;
+      document.getElementById('sup-date').value = ex.date;
+    } else if (type === 'comb') {
+      document.getElementById('comb-title').value = ex.title;
+      document.getElementById('comb-channel').value = ex.channel;
+      document.getElementById('comb-country').value = ex.country;
+      document.getElementById('comb-date').value = ex.date;
+      document.getElementById('comb-views').value = ex.views;
+      document.getElementById('comb-likes').value = ex.likes;
+      document.getElementById('comb-comments').value = ex.comments;
+    }
+  }
+
+  // ─── JSON Toggle ───
+  function toggleJson(prefix) {
+    const body = document.getElementById(prefix + '-json-body');
+    const icon = document.getElementById(prefix + '-json-icon');
+    const visible = body.style.display === 'block';
+    body.style.display = visible ? 'none' : 'block';
+    icon.textContent = visible ? '▶' : '▼';
+  }
+
+  // ─── Level Badge ───
+  function setLevelBadge(id, level) {
+    const el = document.getElementById(id);
+    el.className = 'level-badge level-' + level;
+    const labels = { low: '🔴 LOW', medium: '🟡 MEDIUM', high: '🟢 HIGH' };
+    el.textContent = labels[level] || level.toUpperCase();
+  }
+
+  // ─── Loading State ───
+  function setLoading(btnId, loading) {
+    const btn = document.getElementById(btnId);
+    if (loading) btn.classList.add('loading');
+    else btn.classList.remove('loading');
+    btn.disabled = loading;
+  }
+
+  // ─── Predict Unsupervised ───
+  async function predictUnsupervised() {
+    const views = parseInt(document.getElementById('un-views').value);
+    const likes = parseInt(document.getElementById('un-likes').value);
+    const comments = parseInt(document.getElementById('un-comments').value);
+
+    setLoading('btn-un', true);
+    try {
+      const res = await fetch(API_BASE + '/predict/unsupervised', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ views, likes, comments })
+      });
+      const data = await safeParseJson(res);
+
+      if (!res.ok) throw new Error(data.detail || 'Error tidak diketahui');
+
+      const out = data.output;
+      const panel = document.getElementById('result-un');
+      if (originalPanels['result-un']) {
+        panel.innerHTML = originalPanels['result-un'];
+      }
+      panel.classList.add('visible');
+
+      document.getElementById('un-model-name').textContent = data.model_name;
+      document.getElementById('un-level-value').textContent = out.engagement_level.toUpperCase();
+      setLevelBadge('un-level-badge', out.engagement_level);
+      document.getElementById('un-er').textContent = (out.engagement_rate * 100).toFixed(3) + '%';
+      document.getElementById('un-cluster-id').textContent = 'Cluster #' + out.cluster_id;
+      document.getElementById('un-confidence').textContent = (out.confidence_score * 100).toFixed(1) + '%';
+      document.getElementById('un-json-pre').textContent = JSON.stringify(data, null, 2);
+    } catch (e) {
+      showError('result-un', e.message);
+    }
+    setLoading('btn-un', false);
+  }
+
+  // ─── Predict Supervised ───
+  async function predictSupervised() {
+    const title = document.getElementById('sup-title').value;
+    const channel = document.getElementById('sup-channel').value;
+    const country = document.getElementById('sup-country').value;
+    const dateVal = document.getElementById('sup-date').value;
+    const published_at = dateVal ? dateVal + ':00' : null;
+
+    setLoading('btn-sup', true);
+    try {
+      const res = await fetch(API_BASE + '/predict/supervised', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title, channel, country, published_at })
+      });
+      const data = await safeParseJson(res);
+      if (!res.ok) throw new Error(data.detail || 'Error tidak diketahui');
+
+      const out = data.output;
+      const panel = document.getElementById('result-sup');
+      if (originalPanels['result-sup']) {
+        panel.innerHTML = originalPanels['result-sup'];
+      }
+      panel.classList.add('visible');
+
+      document.getElementById('sup-model-name').textContent = data.model_name;
+      document.getElementById('sup-level-value').textContent = out.predicted_class.toUpperCase();
+      setLevelBadge('sup-level-badge', out.predicted_class);
+
+      ['low','medium','high'].forEach(cls => {
+        const pct = (out.class_probabilities[cls] || 0) * 100;
+        document.getElementById('sup-bar-' + cls).style.width = pct + '%';
+        document.getElementById('sup-pct-' + cls).textContent = pct.toFixed(1) + '%';
+      });
+
+      document.getElementById('sup-json-pre').textContent = JSON.stringify(data, null, 2);
+    } catch (e) {
+      showError('result-sup', e.message);
+    }
+    setLoading('btn-sup', false);
+  }
+
+  // ─── Predict Combined ───
+  async function predictCombined() {
+    const title = document.getElementById('comb-title').value;
+    const channel = document.getElementById('comb-channel').value;
+    const country = document.getElementById('comb-country').value;
+    const dateVal = document.getElementById('comb-date').value;
+    const published_at = dateVal ? dateVal + ':00' : null;
+    const views = parseInt(document.getElementById('comb-views').value);
+    const likes = parseInt(document.getElementById('comb-likes').value);
+    const comments = parseInt(document.getElementById('comb-comments').value);
+
+    setLoading('btn-comb', true);
+    try {
+      const res = await fetch(API_BASE + '/predict/combined', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title, channel, country, published_at, views, likes, comments })
+      });
+      const data = await safeParseJson(res);
+      if (!res.ok) throw new Error(data.detail || 'Error tidak diketahui');
+
+      const panel = document.getElementById('result-comb');
+      if (originalPanels['result-comb']) {
+        panel.innerHTML = originalPanels['result-comb'];
+      }
+      panel.classList.add('visible');
+
+      // Supervised
+      const sp = data.supervised;
+      setLevelBadge('comb-sup-badge', sp.predicted_class);
+      ['low','medium','high'].forEach(cls => {
+        const pct = (sp.class_probabilities[cls] || 0) * 100;
+        document.getElementById('comb-bar-' + cls).style.width = pct + '%';
+        document.getElementById('comb-pct-' + cls).textContent = pct.toFixed(1) + '%';
+      });
+
+      // Unsupervised
+      const up = data.unsupervised;
+      setLevelBadge('comb-un-badge', up.engagement_level);
+      document.getElementById('comb-er').textContent = (up.engagement_rate * 100).toFixed(3) + '%';
+      document.getElementById('comb-un-conf').textContent = (up.confidence_score * 100).toFixed(1) + '%';
+
+      // Alignment
+      const al = data.alignment;
+      const alBlock = document.getElementById('comb-alignment');
+      alBlock.style.display = 'block';
+      alBlock.className = 'alignment-block ' + (al.is_aligned ? 'alignment-aligned' : 'alignment-not');
+      document.getElementById('comb-align-icon').textContent = al.is_aligned ? '✅' : '⚠️';
+      document.getElementById('comb-align-text').textContent = al.interpretation;
+
+      document.getElementById('comb-json-pre').textContent = JSON.stringify(data, null, 2);
+    } catch (e) {
+      showError('result-comb', e.message);
+    }
+    setLoading('btn-comb', false);
+  }
+
+  // ─── Helper YouTube ID Extraction ───
+  function getYouTubeId(url) {
+    if (url.length === 11) return url;
+    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+    const match = url.match(regExp);
+    return (match && match[2].length === 11) ? match[2] : null;
+  }
+
+  // ─── Predict YouTube Auto-Detect ───
+  async function predictYouTube() {
+    const url = document.getElementById('yt-url').value.trim();
+    if (!url) {
+      alert('Silakan masukkan URL atau ID Video YouTube terlebih dahulu.');
+      return;
+    }
+
+    setLoading('btn-yt', true);
+
+    // Tampilkan thumbnail secara responsif berdasarkan video_id di frontend terlebih dahulu
+    const videoId = getYouTubeId(url);
+    if (videoId) {
+      document.getElementById('yt-res-thumbnail').src = `https://img.youtube.com/vi/${videoId}/mqdefault.jpg`;
+      document.getElementById('yt-res-id').textContent = videoId;
+    }
+
+    try {
+      const res = await fetch(API_BASE + '/predict/youtube', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url })
+      });
+      const data = await safeParseJson(res);
+      if (!res.ok) throw new Error(data.detail || 'Gagal menganalisis video YouTube.');
+
+      const panel = document.getElementById('result-yt');
+      if (originalPanels['result-yt']) {
+        panel.innerHTML = originalPanels['result-yt'];
+      }
+      panel.classList.add('visible');
+
+      // Set Metadata
+      const meta = data.input_extracted || {};
+      document.getElementById('yt-metadata-method').textContent = 'Metode: ' + (data.metadata_method || 'Scraping');
+      document.getElementById('yt-res-title').textContent = meta.title || 'Judul Tidak Dikenal';
+      document.getElementById('yt-res-channel').textContent = meta.channel || 'Channel Tidak Dikenal';
+
+      const pubDate = meta.published_at ? new Date(meta.published_at).toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' }) : 'Tidak Diketahui';
+      document.getElementById('yt-res-date').textContent = pubDate;
+      
+      const warnBlock = document.getElementById('yt-warning-block');
+      if (data.data_imputed && data.warning) {
+        if (warnBlock) {
+          warnBlock.style.display = 'flex';
+          document.getElementById('yt-warning-text').textContent = data.warning;
+        }
+        document.getElementById('yt-res-views').innerHTML = `${meta.views.toLocaleString('id-ID')} <span style="font-size:0.75rem; color:var(--accent-orange); font-weight:normal;">(Metrik Interaksi Diimputasi)</span>`;
+      } else {
+        if (warnBlock) {
+          warnBlock.style.display = 'none';
+        }
+        document.getElementById('yt-res-views').textContent = meta.views ? meta.views.toLocaleString('id-ID') : '0';
+      }
+
+      const finalVideoId = data.video_id || videoId;
+      if (finalVideoId) {
+        document.getElementById('yt-res-id').textContent = finalVideoId;
+        document.getElementById('yt-res-thumbnail').src = `https://img.youtube.com/vi/${finalVideoId}/mqdefault.jpg`;
+      }
+
+      // Supervised Prediction (Pra-Tayang)
+      const sp = data.supervised || {};
+      setLevelBadge('yt-sup-badge', sp.predicted_class);
+      ['low','medium','high'].forEach(cls => {
+        const pct = (sp.class_probabilities[cls] || 0) * 100;
+        document.getElementById('yt-bar-' + cls).style.width = pct + '%';
+        document.getElementById('yt-pct-' + cls).textContent = pct.toFixed(1) + '%';
+      });
+
+      // Unsupervised Prediction (Pasca-Tayang)
+      const up = data.unsupervised || {};
+      setLevelBadge('yt-un-badge', up.engagement_level);
+      document.getElementById('yt-er').textContent = (up.engagement_rate * 100).toFixed(3) + '%';
+      document.getElementById('yt-un-conf').textContent = (up.confidence_score * 100).toFixed(1) + '%';
+
+      // Alignment
+      const al = data.alignment || {};
+      const alBlock = document.getElementById('yt-alignment');
+      if (alBlock) {
+        alBlock.style.display = 'block';
+        alBlock.className = 'alignment-block ' + (al.is_aligned ? 'alignment-aligned' : 'alignment-not');
+        document.getElementById('yt-align-icon').textContent = al.is_aligned ? '✅' : '⚠️';
+        document.getElementById('yt-align-text').textContent = al.interpretation;
+      }
+
+      // Raw JSON
+      document.getElementById('yt-json-pre').textContent = JSON.stringify(data, null, 2);
+    } catch (e) {
+      showError('result-yt', e.message);
+    }
+    setLoading('btn-yt', false);
+  }
+
+  // ─── Show Error ───
+  function showError(panelId, msg) {
+    const panel = document.getElementById(panelId);
+    panel.classList.add('visible');
+    panel.innerHTML = `
+      <div class="result-header">
+        <span class="result-status status-error">✗ Error</span>
+      </div>
+      <div class="error-block">
+        <strong>Gagal:</strong> ${msg}
+        <br/><span style="font-size:0.78rem; color:var(--text-dim); margin-top:6px; display:block;">
+          Pastikan model sudah ditraining (jalankan train_models.py) dan server aktif.
+        </span>
+      </div>`;
+  }
+
+  // ─── Model Info ───
+  async function loadModelInfo() {
+    const grid = document.getElementById('model-info-grid');
+    grid.innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:20px; color:var(--text-muted);">⏳ Memuat...</div>';
+    try {
+      const res = await fetch(API_BASE + '/health');
+      const data = await safeParseJson(res);
+
+      const un = data.unsupervised_info || {};
+      const sup = data.supervised_info || {};
+
+      grid.innerHTML = `
+        <div class="mi-card">
+          <div class="mi-title">🔵 Unsupervised Model</div>
+          <div class="mi-name">${un.model_name || 'Belum ditraining'}</div>
+          ${un.f1_weighted_test ? `<div class="mi-metric">F1 Weighted: <strong>${un.f1_weighted_test}</strong></div>` : ''}
+          ${un.silhouette_test ? `<div class="mi-metric">Silhouette: <strong>${un.silhouette_test}</strong></div>` : ''}
+          <div class="mi-metric" style="margin-top:8px;">
+            Status: <span style="color:${data.unsupervised_model_ready ? 'var(--accent-green)' : 'var(--accent-red)'}">
+              ${data.unsupervised_model_ready ? '✅ Ready' : '❌ Belum ditraining'}
+            </span>
+          </div>
+        </div>
+        <div class="mi-card">
+          <div class="mi-title">🔴 Supervised Model</div>
+          <div class="mi-name">${sup.model_name || 'Belum ditraining'}</div>
+          ${sup.accuracy_test ? `<div class="mi-metric">Accuracy: <strong>${(sup.accuracy_test*100).toFixed(2)}%</strong></div>` : ''}
+          ${sup.weights ? `<div class="mi-metric">Weights: <strong>${JSON.stringify(sup.weights)}</strong></div>` : ''}
+          <div class="mi-metric" style="margin-top:8px;">
+            Status: <span style="color:${data.supervised_model_ready ? 'var(--accent-green)' : 'var(--accent-red)'}">
+              ${data.supervised_model_ready ? '✅ Ready' : '❌ Belum ditraining'}
+            </span>
+          </div>
+        </div>`;
+    } catch (e) {
+      grid.innerHTML = `<div style="grid-column:1/-1; color:var(--accent-red); padding:16px;">Gagal memuat: ${e.message}</div>`;
+    }
+  }
+
+  // Auto-load info on startup
+  loadModelInfo();
+</script>
+</body>
+</html>
