@@ -4,3 +4,16 @@
 daily_trending_videos.csv
 yt_pic.webp
 *.pkl
+
+# Python cache
+__pycache__/
+*.py[cod]
+
+# Environments
+.env
+
+# Logs
+*.log
+
+# Models
+models/
